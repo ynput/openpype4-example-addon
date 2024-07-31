@@ -1,15 +1,19 @@
 from typing import Type
 
-from nxtools import logging
-
+from ayon_server.actions import (
+    ActionExecutor,
+    ExecuteResponseModel,
+    SimpleActionManifest,
+)
 from ayon_server.addons import BaseServerAddon
 from ayon_server.api.dependencies import CurrentUser, ProjectName
 from ayon_server.entities import FolderEntity
-from ayon_server.events import EventStream, EventModel
+from ayon_server.events import EventModel, EventStream
 from ayon_server.exceptions import NotFoundException
 from ayon_server.lib.postgres import Postgres
+from nxtools import logging
 
-
+from .actions import EXAMPLE_SIMPLE_ACTIONS
 from .settings import ExampleSettings
 from .site_settings import ExampleSiteSettings
 
@@ -129,3 +133,35 @@ class ExampleAddon(BaseServerAddon):
         favorite_color = await self.get_cached_setting()
         logging.debug(f"Example addon says, that {event.description}")
         logging.debug(f"Admin's favorite color is {favorite_color}")
+
+    #
+    # Browser actions
+    #
+
+    async def get_simple_actions(
+        self,
+        project_name: str | None = None,
+        variant: str = "production",
+    ) -> list[SimpleActionManifest]:
+        """Return a list of simple actions provided by the addon"""
+        return EXAMPLE_SIMPLE_ACTIONS
+
+    async def execute_action(
+        self,
+        executor: ActionExecutor,
+    ) -> ExecuteResponseModel:
+        """Execute an action provided by the addon"""
+
+        if executor.identifier == "example-folder-action":
+            context = executor.context
+            folder_id = context.entity_ids[0]
+
+            f = await FolderEntity.load(context.project_name, folder_id)
+            return await executor.get_server_action_response(
+                message=f"Action performed on {f.name}"
+            )
+
+        elif executor.identifier == "example-task-action":
+            return await executor.get_launcher_action_response(args=["blabla"])
+
+        raise ValueError(f"Unknown action: {executor.identifier}")
