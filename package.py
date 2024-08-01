@@ -1,6 +1,6 @@
 name = "example"
 title = "Example"
-version = "2.0.1"
+version = "2.1.0"
 
 services = {
     "ExampleService": {"image": "ynput/ayon-example-service"},

@@ -3,18 +3,8 @@ from ayon_server.actions import SimpleActionManifest
 
 EXAMPLE_SIMPLE_ACTIONS = [
     SimpleActionManifest(
-        identifier="folder-action",
-        label="Folder Action",
-        category="server",
-        order=100,
-
-        entity_type="folder",
-        entity_subtypes=None,
-        allow_multiselection=False,
-    ),
-    SimpleActionManifest(
-        identifier="folder-action-2",
-        label="Folder Do Stuff",
+        identifier="example-folder-action-1",
+        label="Example folder action 1",
         category="server",
         order=100,
         icon={"type": "material-symbols", "name": "folder"},
@@ -24,8 +14,8 @@ EXAMPLE_SIMPLE_ACTIONS = [
         allow_multiselection=False,
     ),
     SimpleActionManifest(
-        identifier="folder-action-2",
-        label="Delete folder",
+        identifier="example-folder-action-2",
+        label="Example folder action 2",
         category="admin",
         order=100,
         icon={"type": "material-symbols", "name": "delete"},
@@ -35,7 +25,7 @@ EXAMPLE_SIMPLE_ACTIONS = [
         allow_multiselection=False,
     ),
     SimpleActionManifest(
-        identifier="task-action",
+        identifier="example-task-action",
         label="Task Action",
         category="server",
         order=100,

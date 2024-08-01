@@ -9,7 +9,8 @@ from ayon_server.addons import BaseServerAddon
 from ayon_server.api.dependencies import CurrentUser, ProjectName
 from ayon_server.entities import FolderEntity
 from ayon_server.events import EventModel, EventStream
-from ayon_server.exceptions import NotFoundException
+from ayon_server.exceptions import NotFoundException, NotImplementedException
+from ayon_server.helpers.get_entity_class import get_entity_class
 from ayon_server.lib.postgres import Postgres
 from nxtools import logging
 
@@ -23,12 +24,21 @@ class ExampleAddon(BaseServerAddon):
     site_settings_model: Type[ExampleSiteSettings] = ExampleSiteSettings
 
     # frontend_scopes defines, where the web frontend of the addon
-    # should be displayed in openpype web app. Currently only "project"
-    # is supported. Additional arguments may be passed (in this case)
-    # to show the project hierarchy sidebar. This feature is not yet
-    # fully functional and will be changed in the future.
+    # should be displayed in openpype web app.
+    # Supported scopes are "project" and "settings"
+    #
+    # Additional arguments may be passed (in this case)
+    # to show the project hierarchy sidebar.
 
-    frontend_scopes: dict[str, dict[str, str]] = {"project": {"sidebar": "hierarchy"}}
+    frontend_scopes: dict[str, dict[str, str]] = {
+        "project": {"sidebar": "hierarchy"},
+    }
+
+    # Addon type defines the type of the addon.
+    # it can be either "server" or "pipeline".
+    # Server addons can be switched without creating a new
+    # bundle.
+
     addon_type = "server"
 
     # intitalize method is called during the addon initialization
@@ -56,7 +66,6 @@ class ExampleAddon(BaseServerAddon):
         # self.request_server_restart()
 
     # Example REST endpoint
-    # Depends(dep_current_user) ensures the request is authenticated
 
     async def get_random_folder(
         self,
@@ -144,6 +153,9 @@ class ExampleAddon(BaseServerAddon):
         variant: str = "production",
     ) -> list[SimpleActionManifest]:
         """Return a list of simple actions provided by the addon"""
+
+        _ = project_name  # Unused
+        _ = variant # Unused
         return EXAMPLE_SIMPLE_ACTIONS
 
     async def execute_action(
@@ -152,16 +164,19 @@ class ExampleAddon(BaseServerAddon):
     ) -> ExecuteResponseModel:
         """Execute an action provided by the addon"""
 
-        if executor.identifier == "example-folder-action":
+        if executor.identifier.startswith("example-"):
             context = executor.context
-            folder_id = context.entity_ids[0]
+            entity_type = context.entity_type
+            entity_id = context.entity_ids[0]
+            entity_class = get_entity_class(entity_type)
 
-            f = await FolderEntity.load(context.project_name, folder_id)
+            entity = await entity_class.load(context.project_name, entity_id)
+
             return await executor.get_server_action_response(
-                message=f"Action performed on {f.name}"
+                message=f"{executor.identifier} performed on {entity_type} {entity.name}"
             )
 
-        elif executor.identifier == "example-task-action":
-            return await executor.get_launcher_action_response(args=["blabla"])
+        elif executor.identifier.startswith("launch-"):
+            return await executor.get_launcher_action_response(args=["i_wont_work"])
 
-        raise ValueError(f"Unknown action: {executor.identifier}")
+        raise NotImplementedException(f"Not implemented action: {executor.identifier}")
